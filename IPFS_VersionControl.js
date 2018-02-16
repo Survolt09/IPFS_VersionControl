@@ -65,7 +65,7 @@ var recursiveAsyncReadLine = function () {
 
 
             case "2":
-                console.log(programs);
+                   console.log(JSON.stringify(programs, null, 4));
                 recursiveAsyncReadLine();
                 break;
 
