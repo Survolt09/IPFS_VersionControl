@@ -8,6 +8,8 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 const { exec } = require('child_process');
+var PouchDB = require('pouchdb');
+var db = new PouchDB('programs');
 
 var programs = [];
 
@@ -19,6 +21,12 @@ function fileAlreadyExists(file_name, programs) {//returns -1 if the file doesn'
     }
 
     return -1;
+}
+function showPrograms() {
+  db.allDocs({include_docs: true, descending: true}, function(err, doc) {
+  //  redrawTodosUI(doc.rows);
+      console.log(JSON.stringify(doc.rows, null, 4));
+  });
 }
 
 var recursiveAsyncReadLine = function () {
@@ -54,8 +62,12 @@ var recursiveAsyncReadLine = function () {
                                 program.versions.push(version);
                                 programs.push(program);
                             }
-
-                            recursiveAsyncReadLine();//calls the function back to add a new file or display the existing files
+                            db.post(program, function callback(err, result) {
+                            if (!err) {
+                              console.log('Successfully posted the program !');
+                            }
+                          });
+                setTimeout(recursiveAsyncReadLine,1000);//calls back the function after a second to post the program to the database first
                         });
                     });
 
@@ -65,8 +77,10 @@ var recursiveAsyncReadLine = function () {
 
 
             case "2":
-                   console.log(JSON.stringify(programs, null, 4));
-                recursiveAsyncReadLine();
+                   console.log("local programs :\n"+JSON.stringify(programs, null, 4));
+                console.log("pouchdb :");
+                showPrograms();
+                setTimeout(recursiveAsyncReadLine,1000);//calls back the function after a second to display the list of programs first
                 break;
 
             default:
