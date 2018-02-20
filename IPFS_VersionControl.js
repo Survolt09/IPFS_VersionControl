@@ -7,8 +7,12 @@ const rl = readline.createInterface({
 const { exec } = require('child_process');
 var PouchDB = require('pouchdb');
 var db = new PouchDB('programs');
-
-var programs = [];
+var programs =[];
+var programDB={"_id":"programs","programs": programs};//create an object containing the array of programs in order to store it to pouchdb
+db.get('programs').then(function (doc) {
+programs = doc.programs;
+    programDB={"_id":"programs","programs": programs};
+                });
 
 function fileAlreadyExists(file_name, programs) {//returns -1 if the file doesn't exists, the index of the file if it exists
     var index = 0;
@@ -19,19 +23,19 @@ function fileAlreadyExists(file_name, programs) {//returns -1 if the file doesn'
 
     return -1;
 }
-function showPrograms() {
+/*function showPrograms() {
   db.allDocs({include_docs: true, descending: true}, function(err, doc) {
   //  redrawTodosUI(doc.rows);
       console.log(JSON.stringify(doc.rows, null, 4));
   });
-}
+}*/
 
 var recursiveAsyncReadLine = function () {
 
-    rl.question("What do you want to do : \n 1-Add new file to IPFS \n 2-Look at the IPFS files\n 3-Exit\n", (answer) => {
+    rl.question("What do you want to do : \n 1-Add a new file to IPFS \n 2-Display your IPFS files\n 3-Exit\n", (answer) => {
 
         switch (answer.trim()) {
-            case "1":
+            case "1"://adds a new file
                 var program = { "name": "", "versions": [] };
                 var version = { "number": "", "hash": "" };
                 rl.question("Enter the file path you want to add to IPFS :\n", (path) => {
@@ -40,6 +44,7 @@ var recursiveAsyncReadLine = function () {
                     exec(command, (err, stdout, stderr) => {
                         if (err) {
                             console.error(err);
+                            recursiveAsyncReadLine();
                             return;
                         }
                         console.log(stdout);
@@ -59,10 +64,16 @@ var recursiveAsyncReadLine = function () {
                                 program.versions.push(version);
                                 programs.push(program);
                             }
-                            db.post(program, function callback(err, result) {
+                            db.put(programDB, function callback(err, result) {
                             if (!err) {
                               console.log('Successfully posted the program !');
                             }
+                                else
+                                    {
+                                        
+                                    console.log(err);
+                                        console.log("you tried to post :\n"+JSON.stringify(programDB, null, 4));
+                                    }
                           });
                 setTimeout(recursiveAsyncReadLine,1000);//calls back the function after a second to post the program to the database first
                         });
@@ -73,13 +84,16 @@ var recursiveAsyncReadLine = function () {
                 break;
 
 
-            case "2":
-                   console.log("local programs :\n"+JSON.stringify(programs, null, 4));
+            case "2"://displays the files
+                   console.log("local programs :\n"+JSON.stringify(programDB, null, 4));
                 console.log("pouchdb :");
-                showPrograms();
+                db.get('programs').then(function (doc) {
+                  console.log(JSON.stringify(doc, null, 4));
+                });
                 setTimeout(recursiveAsyncReadLine,1000);//calls back the function after a second to display the list of programs first
                 break;
-            case "3":
+                
+            case "3"://exit
                 rl.close();
                 break;
 
