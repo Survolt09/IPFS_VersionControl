@@ -1,7 +1,4 @@
 //IPFS_VersionControl
-
-
-
 const readline = require('readline');
 const rl = readline.createInterface({
     input: process.stdin,
@@ -31,7 +28,7 @@ function showPrograms() {
 
 var recursiveAsyncReadLine = function () {
 
-    rl.question("What do you want to do : \n 1-Add new file to IPFS \n 2-Look at the IPFS files\n", (answer) => {
+    rl.question("What do you want to do : \n 1-Add new file to IPFS \n 2-Look at the IPFS files\n 3-Exit\n", (answer) => {
 
         switch (answer.trim()) {
             case "1":
@@ -81,6 +78,9 @@ var recursiveAsyncReadLine = function () {
                 console.log("pouchdb :");
                 showPrograms();
                 setTimeout(recursiveAsyncReadLine,1000);//calls back the function after a second to display the list of programs first
+                break;
+            case "3":
+                rl.close();
                 break;
 
             default:
