@@ -1,12 +1,14 @@
 //IPFS_VersionControl
 
 
-
 const readline = require('readline');
-var exec = require('child_process').exec;
-var PouchDB = require('pouchdb');
-
+const exec = require('child_process').exec;
+const PouchDB = require('pouchdb');
+const chalk = require('chalk');
+const clear = require('clear');
 var db = new PouchDB('programs');
+const figlet = require('figlet');
+const inquirer = require('inquirer')
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -17,118 +19,192 @@ function fileAlreadyExistsInDatabase(file_name) { //Try to retrieve the document
     return new Promise((resolve, reject) => {
         db.get(file_name)
             .then((doc) => {
-                console.log("The following program already exists :\n\n" + JSON.stringify(doc));
+                console.log(chalk.yellow("\nThe following program already exists :\n\n" + JSON.stringify(doc) +"\n\n"));
                 return resolve(0);
             })
             .catch((err) => {
-                console.log("The program doesn't exist yet !\n\n");
+                console.log(chalk.yellow("\nThe program doesn't exist yet !\n\n"));
                 return resolve(-1);
             })
-    })
+      })
 }
 
 function showPrograms() {
+    console.log("\nYour PouchDB Programs :\n\n");
     return new Promise((resolve, reject) => {
         db.allDocs({ include_docs: true, descending: true })
             .then((doc) => {
-                console.log(JSON.stringify(doc.rows, null, 4));
+                console.log(chalk.cyanBright(JSON.stringify(doc.rows, null, 4)));
+                console.log()
                 return resolve()
             })
+      })
+}
+
+clear();
+console.log(
+  chalk.yellow(
+    figlet.textSync('NeuroChain', { horizontalLayout: 'full' })
+  )
+);
+
+
+function main(){
+
+  var actions = [
+    {
+      type: 'list',
+      name: 'actions',
+      message: 'What do you want to do ?',
+      choices: ['Add file to IPFS',
+                'View IPFS files',
+                'Sync to COUCHDB',
+                new inquirer.Separator(),
+                'Exit']
+    }
+  ];
+
+  inquirer.prompt(actions).then(answer => {
+    switch(answer.actions){
+      case 'Add file to IPFS' :
+        addFileToIPFS();
+        break;
+      case 'View IPFS files' :
+        viewIPFSFile();
+        break;
+      case 'Sync to COUCHDB':
+        syncCouchDB();
+        break;
+      case 'Exit':
+        process.exit(-1);
+        break;
+    }
+  })
+}
+
+function viewIPFSFile(){
+  showPrograms()
+      .then(main);
+}
+
+function syncCouchDB(){
+
+  var couchDBURL =[{
+    type : 'input',
+    name : 'couchURL',
+    message : 'Enter the url of the CouchDB database you want to sync to :'
+    }]
+
+  inquirer.prompt(couchDBURL)
+  .then(answer =>{
+    PouchDB.sync(db,answer.couchURL)
+      .on('change',(info)=>{
+          console.log(info)
+          main();
+      })
+      .on('complete',(info)=>{
+          console.log(info)
+          console.log(chalk.green("Succefully synchonized with CouchDB !\n"))
+          main();
+      })
+      .on('error',(err)=>{
+          console.log(chalk.red("Error : \n Check the URL or check your internet connection\n"))
+          console.log(err)
+          main();
+      })
+  })
+}
+
+function onError(err){
+  console.log(chalk.red("An error has occured !\n"));
+  console.log(err);
+  main();
+}
+
+function enterFileVersion(){
+  var fileVersion =[{
+    type : 'input',
+    name : 'Version',
+    message : 'Enter the file Version :'
+    }]
+  return new Promise ((resolve,reject) =>{
+    inquirer.prompt(fileVersion).then(answer =>{
+       return resolve(answer.Version);
+       })
+       //handle the case where the version already exists
+  })
+}
+
+function enterFilePath(){
+  var filePath =[{
+    type : 'input',
+    name : 'Path',
+    message : 'Enter the file path you want to add to IPFS :'
+    }
+  ]
+  return new Promise ((resolve,reject)=>{
+    inquirer.prompt(filePath).then(answer =>{
+       return resolve(answer.Path);
+       })
+       //handle something
+  })
+}
+
+
+function addFileToIPFS(){
+
+    enterFilePath()
+      .then(path=>{
+        var command = {cmd : `ipfs add ${path}`};
+        exec(command.cmd, (err, stdout, stderr) => {
+        if (!err) {
+
+            var arrayOfSubstrings = stdout.split(" ");
+            var file_name = arrayOfSubstrings[2].replace("\n", "");
+            var file_hash = arrayOfSubstrings[1];
+            var program = { "_id": "", "versions": [] };
+            var version = { "number": "", "hash": "" };
+
+            fileAlreadyExistsInDatabase(file_name)
+                .then((exists) => {
+                  if (exists != -1) {//if the file already exists
+                      enterFileVersion()
+                      .then((vers)=>{
+                        version.number = vers;
+                        version.hash = file_hash;
+                        db.get(file_name)
+                            .then((prog) => {
+                                prog.versions.push(version)
+                                return db.put(prog)
+                            })
+                            .then(()=>{
+                              console.log(chalk.green(`\nSuccesfully add the version ${vers} of the program ${file_name} ! \n`));
+                              main();
+                          })
+                      })
+                      .catch((err) => onError())
+                  }
+                  else {//if the files doesn't exists
+                    enterFileVersion()
+                      .then((vers)=>{
+                        version.number = vers;
+                        version.hash = file_hash;
+                        program._id = file_name;
+                        program.versions.push(version);
+                        db.put(program)
+                            .then(()=>{
+                              console.log(chalk.green(`\nSuccefully added the program ${file_name} !\n`));
+                              main();
+                            })
+                            .catch((err) => onError())
+                      })
+                      .catch((err) => onError())
+                    }
+                  })
+            .catch((err) => onError())
+            }
+        })
     })
 }
 
-
-var recursiveAsyncReadLine = function () {
-
-    rl.question("\n\n What do you want to do : \n\n 1-Add new file to IPFS \n 2-Look at the IPFS files\n 3-Sync to CouchDB\n\n", (answer) => {
-
-        switch (answer.trim()) {
-            case "1":
-                var program = { "_id": "", "versions": [] };
-                var version = { "number": "", "hash": "" };
-                rl.question("Enter the file path you want to add to IPFS :\n\n", (path) => {
-                    var command = "ipfs add " + path.trim();
-
-                    exec(command, (err, stdout, stderr) => {
-                        if (!err) {
-
-                            console.log(stdout);
-                            var arrayOfSubstrings = stdout.split(" ");
-                            var file_name = arrayOfSubstrings[2].replace("\n", "");
-                            var file_hash = arrayOfSubstrings[1];
-                            fileAlreadyExistsInDatabase(file_name)
-                                .then((exists) => {
-
-                                    rl.question("Enter the file version :\n\n", (file_version) => {
-                                        version.number = file_version;
-                                        version.hash = file_hash;
-                                        if (exists != -1) {//if the file already exists
-                                            db.get(file_name)
-                                                .then((prog) => {
-                                                    prog.versions.push(version)
-                                                    return db.put(prog)
-                                                })
-                                                .then(console.log(`Succesfully add the version ${version.number} of the program ${file_name} ! `))
-                                                .catch((err) => console.log(err))
-                                        }
-                                        else {//if the files doesn't exists
-                                            program._id = file_name;
-                                            program.versions.push(version);
-                                            db.put(program)
-                                                .then(console.log(`Succefully added the program ${file_name} !`))
-                                                .catch((err) => console.log(err))
-                                        }
-                                        recursiveAsyncReadLine()//calls back the function after a second to post the program to the database first
-                                    })
-
-                                });
-                        }
-                        else{
-                            console.error(err);
-                        }
-
-                    });
-
-                });
-
-                break;
-
-            case "2":
-                console.log("Your PouchDB Programs :\n\n");
-                showPrograms()
-                    .then(recursiveAsyncReadLine);
-
-                break;
-
-            case "3":
-            rl.question("Enter the url of the CouchDB database you want to sync to : \n\n", (answer)=>{
-              var url = answer;
-              PouchDB.sync(db,url)
-                .on('change',(info)=>{
-                  console.log(info)
-                  recursiveAsyncReadLine();
-                })
-                .on('complete',(info)=>{
-                  console.log(info)
-                  recursiveAsyncReadLine();
-                })
-                .on('error',(err)=>{
-                  console.log(err)
-                  recursiveAsyncReadLine();
-                })
-              })
-
-              break;
-
-
-            default:
-                console.log("Wrong input\n\n");
-                recursiveAsyncReadLine();
-                break;
-        }
-
-    });
-
-}
-
-recursiveAsyncReadLine();
+main()

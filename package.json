@@ -1,0 +1,30 @@
+{
+  "name": "ipfs_versioncontrol",
+  "version": "1.0.0",
+  "description": "Tool to manage your file uploaded on IPFS network.",
+  "main": "IPFS_VersionControl.js",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "chalk": "^2.3.2",
+    "clear": "^0.1.0",
+    "figlet": "^1.2.0",
+    "pouchdb": "^6.4.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Survolt09/IPFS_VersionControl.git"
+  },
+  "keywords": [
+    "IPFS"
+  ],
+  "author": "Survolt09,Paul Lerner",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Survolt09/IPFS_VersionControl/issues"
+  },
+  "homepage": "https://github.com/Survolt09/IPFS_VersionControl#readme"
+}
