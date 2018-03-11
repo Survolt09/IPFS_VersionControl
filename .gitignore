@@ -1,2 +1,4 @@
 #ignore the programs folder (location of our programs database)
 programs/
+#ignore the node modules
+node_modules
