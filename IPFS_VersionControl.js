@@ -10,6 +10,9 @@ var db = new PouchDB('programs');
 const figlet = require('figlet');
 const inquirer = require('inquirer')
 
+
+
+
 const rl = readline.createInterface({
 	input: process.stdin,
 	output: process.stdout
@@ -174,11 +177,18 @@ function enterFilePath(){
 return new Promise ((resolve,reject)=>{
 	inquirer.prompt(filePath).then(answer =>{
 		return resolve(answer.Path);
-	})
+		})
 	//handle something
-})
+	})
 }
 
+function getDateTime(){
+	var today = new Date()
+	var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+	var time = today.getHours() + "h :" + today.getMinutes() + "m :" + today.getSeconds() +"s";
+	var dateTime = date+' '+time;
+	return dateTime
+}
 
 function addFileToIPFS(){
 
@@ -192,7 +202,7 @@ function addFileToIPFS(){
 				var file_name = arrayOfSubstrings[2].replace("\n", "");
 				var file_hash = arrayOfSubstrings[1];
 				var program = { "_id": "", "versions": [] };
-				var version = { "number": "", "hash": "", "description" : "" };
+				var version = { "number": "", "hash": "", "description" : "","datetime":"" };
 
 				fileAlreadyExistsInDatabase(file_name)
 				.then((exists) => {
@@ -201,6 +211,7 @@ function addFileToIPFS(){
 						.then((vers)=>{
 							version.number = vers;
 							version.hash = file_hash;
+							version.datetime = getDateTime()
 							enterFileDescription().then(description=>{
 								version.description=description;
 								db.get(file_name)
@@ -222,6 +233,7 @@ function addFileToIPFS(){
 						version.number = vers;
 						version.hash = file_hash;
 						program._id = file_name;
+						version.datetime = getDateTime()
 						enterFileDescription().then(description=>{
 							version.description=description
 							program.versions.push(version);

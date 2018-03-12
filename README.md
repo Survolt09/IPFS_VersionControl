@@ -1,20 +1,19 @@
 # IPFS_VersionControl
 Node Program allowing you to manage your IPFS files versions and store them to CouchDB
 
-Next improvments : 
+Next improvments :
 
--Afficher dans un tableau
--Apercu du fichier uploadé
--Description/DATE
--Ajout d'une API 
--inquirer
--trier/rechercher tag /date
--Apercu du fichier en local
--Archivage 
--Récuperer fichier IPFS
--Encrypter le fichier
--Création de backup
-	
+- Apercu du fichier uploadé
+- Add description and date to the file
+- Add API to handle multiple platforms
+- Add beautiful cli using inquirer
+- sort/ serach by tag/date
+- Snapshot of the selected file
+- Archiving
+- Retrieve ipfs file
+- File encryption
+- Backup
+
 To access couchDB interface :
 
 http://localhost:5984/_utils/fauxton/
