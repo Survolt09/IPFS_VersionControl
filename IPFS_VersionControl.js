@@ -9,9 +9,7 @@ const clear = require('clear');
 var db = new PouchDB('programs');
 const figlet = require('figlet');
 const inquirer = require('inquirer')
-
-
-
+const interface = require('./Interface.js')
 
 const rl = readline.createInterface({
 	input: process.stdin,
@@ -47,7 +45,7 @@ function showPrograms() {
 clear();
 console.log(
 	chalk.yellow(
-		figlet.textSync('NeuroChain', { horizontalLayout: 'full' })
+		figlet.textSync('IPFS_VC', { horizontalLayout: 'full' })
 	)
 );
 
@@ -92,31 +90,28 @@ function viewIPFSFile(){
 
 function syncCouchDB(){
 
-	var couchDBURL =[{
-		type : 'input',
-		name : 'couchURL',
-		message : 'Enter the url of the CouchDB database you want to sync to :'
-	}]
-
-	inquirer.prompt(couchDBURL)
-	.then(answer =>{
-		PouchDB.sync(db,answer.couchURL)
-		.on('change',(info)=>{
-			console.log(info)
-			main();
-		})
-		.on('complete',(info)=>{
-			console.log(info)
-			console.log(chalk.green("Succefully synchonized with CouchDB !\n"))
-			main();
-		})
-		.on('error',(err)=>{
-			console.log(chalk.red("Error : \n Check the URL or check your internet connection\n"))
-			console.log(err)
-			main();
-		})
-	})
+		interface.enterCouchURL()
+		.then((couchURL)=>{
+			PouchDB.sync(db,couchURL)
+			.on('change',(info)=>{
+				console.log(info)
+				main();
+			})
+			.on('complete',(info)=>{
+				console.log(info)
+				console.log(chalk.green("Succefully synchonized with CouchDB !\n"))
+				main();
+			})
+			.on('error',(err)=>{
+				console.log(chalk.red("Error : \n Check the URL or check your internet connection\n"))
+				console.log(err)
+				main();
+			})
+	 })
+	 .catch((err)=>onError(err))
 }
+
+
 
 function onError(err){
 	console.log(chalk.red("An error has occured !\n"));
@@ -124,63 +119,7 @@ function onError(err){
 	main();
 }
 
-function enterFileVersion(){
-	var fileVersion =[{
-		type : 'input',
-		name : 'Version',
-		message : 'Enter the file Version :'
-	}]
-	return new Promise ((resolve,reject) =>{
-		inquirer.prompt(fileVersion).then(answer =>{
-			return resolve(answer.Version);
-		})
-		//handle the case where the version already exists
-	})
-}
 
-
-function enterFileDescription(){
-	var isDescription = [{
-		type:'confirm',
-		name:'isDescription',
-		message : 'Do you want to add a description to your file ?'
-	}]
-
-	var fileDescription= [{
-		type : 'input',
-		name : 'Description',
-		message : 'Enter the description :'
-	}]
-
-	return new Promise((resolve,reject)=>{
-		inquirer.prompt(isDescription).then(answer=>{
-			if(answer.isDescription == true){
-				inquirer.prompt(fileDescription).then(answer=>{
-					return resolve (answer.Description);
-				})
-			}
-			else{
-				return resolve();
-			}
-		})
-	})
-}
-
-
-function enterFilePath(){
-	var filePath =[{
-		type : 'input',
-		name : 'Path',
-		message : 'Enter the file path you want to add to IPFS :'
-	}
-]
-return new Promise ((resolve,reject)=>{
-	inquirer.prompt(filePath).then(answer =>{
-		return resolve(answer.Path);
-		})
-	//handle something
-	})
-}
 
 function getDateTime(){
 	var today = new Date()
@@ -192,7 +131,7 @@ function getDateTime(){
 
 function addFileToIPFS(){
 
-	enterFilePath()
+	interface.enterFilePath()
 	.then(path=>{
 		var command = {cmd : `ipfs add ${path}`};
 		exec(command.cmd, (err, stdout, stderr) => {
@@ -207,12 +146,12 @@ function addFileToIPFS(){
 				fileAlreadyExistsInDatabase(file_name)
 				.then((exists) => {
 					if (exists != -1) {//if the file already exists
-						enterFileVersion()
+						interface.enterFileVersion()
 						.then((vers)=>{
 							version.number = vers;
 							version.hash = file_hash;
 							version.datetime = getDateTime()
-							enterFileDescription().then(description=>{
+							interface.enterFileDescription().then(description=>{
 								version.description=description;
 								db.get(file_name)
 								.then((prog) => {
@@ -228,13 +167,13 @@ function addFileToIPFS(){
 						.catch((err) => onError(err))
 					}
 					else {//if the files doesn't exists
-					enterFileVersion()
+					interface.enterFileVersion()
 					.then((vers)=>{
 						version.number = vers;
 						version.hash = file_hash;
 						program._id = file_name;
 						version.datetime = getDateTime()
-						enterFileDescription().then(description=>{
+						interface.enterFileDescription().then(description=>{
 							version.description=description
 							program.versions.push(version);
 							db.put(program)
