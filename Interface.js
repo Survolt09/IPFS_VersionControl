@@ -1,11 +1,29 @@
-const readline = require('readline');
-const exec = require('child_process').exec;
-const PouchDB = require('pouchdb');
+
+
 const chalk = require('chalk');
-const clear = require('clear');
-var db = new PouchDB('programs');
-const figlet = require('figlet');
 const inquirer = require('inquirer')
+
+function selectAction(){
+
+	var actions = [
+		{
+			type: 'list',
+			name: 'actions',
+			message: 'What do you want to do ?',
+			choices: ['Add file to IPFS',
+			'View IPFS files',
+			'Sync to COUCHDB',
+			new inquirer.Separator(),
+			'Exit']
+		}
+	];
+
+	return new Promise((resolve,reject)=>{
+		inquirer.prompt(actions).then(answer => {
+			return resolve(answer.actions);
+		})
+	})
+}
 
 
 function enterCouchURL(){
@@ -67,12 +85,13 @@ function enterFileDescription(){
 
 
 function enterFilePath(){
+
 	var filePath =[{
 		type : 'input',
 		name : 'Path',
 		message : 'Enter the file path you want to add to IPFS :'
-	}
-]
+	}]
+
 return new Promise ((resolve,reject)=>{
 	inquirer.prompt(filePath).then(answer =>{
 		return resolve(answer.Path);
@@ -87,4 +106,5 @@ module.exports = {
     enterCouchURL,
     enterFileVersion,
     enterFileDescription,
+		selectAction
 }

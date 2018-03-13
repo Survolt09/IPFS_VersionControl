@@ -10,11 +10,36 @@ var db = new PouchDB('programs');
 const figlet = require('figlet');
 const inquirer = require('inquirer')
 const interface = require('./Interface.js')
+const moment = require('moment')
 
-const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout
-});
+
+clear();
+console.log(
+	chalk.yellow(
+		figlet.textSync('IPFS_VC', { horizontalLayout: 'full' })
+	)
+);
+
+function main(){
+
+	interface.selectAction().then(action=>{
+		switch(action){
+			case 'Add file to IPFS' :
+			addFileToIPFS();
+			break;
+			case 'View IPFS files' :
+			viewIPFSFile();
+			break;
+			case 'Sync to COUCHDB':
+			syncCouchDB();
+			break;
+			case 'Exit':
+			process.exit(-1);
+			break;
+		}
+	})
+}
+
 
 function fileAlreadyExistsInDatabase(file_name) { //Try to retrieve the document in the db to see if the file exists.
 	return new Promise((resolve, reject) => {
@@ -39,47 +64,6 @@ function showPrograms() {
 			console.log()
 			return resolve()
 		})
-	})
-}
-
-clear();
-console.log(
-	chalk.yellow(
-		figlet.textSync('IPFS_VC', { horizontalLayout: 'full' })
-	)
-);
-
-
-function main(){
-
-	var actions = [
-		{
-			type: 'list',
-			name: 'actions',
-			message: 'What do you want to do ?',
-			choices: ['Add file to IPFS',
-			'View IPFS files',
-			'Sync to COUCHDB',
-			new inquirer.Separator(),
-			'Exit']
-		}
-	];
-
-	inquirer.prompt(actions).then(answer => {
-		switch(answer.actions){
-			case 'Add file to IPFS' :
-			addFileToIPFS();
-			break;
-			case 'View IPFS files' :
-			viewIPFSFile();
-			break;
-			case 'Sync to COUCHDB':
-			syncCouchDB();
-			break;
-			case 'Exit':
-			process.exit(-1);
-			break;
-		}
 	})
 }
 
@@ -122,11 +106,8 @@ function onError(err){
 
 
 function getDateTime(){
-	var today = new Date()
-	var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-	var time = today.getHours() + "h :" + today.getMinutes() + "m :" + today.getSeconds() +"s";
-	var dateTime = date+' '+time;
-	return dateTime
+	var datetime = moment().format('MMMM Do YYYY, h:mm:ss a');
+	return(datetime);
 }
 
 function addFileToIPFS(){
