@@ -9,7 +9,8 @@
     "clear": "^0.1.0",
     "figlet": "^1.2.0",
     "inquirer": "^5.1.0",
-    "pouchdb": "^6.4.3"
+    "pouchdb": "^6.4.3",
+    "moment" : "latest"
   },
   "devDependencies": {},
   "scripts": {
