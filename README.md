@@ -23,13 +23,15 @@ To install this program:
 To access couchDB interface, type in your favorite navigator :
 
 ```
-http://localhost:5984/_utils/fauxton/```
+http://localhost:5984/_utils/fauxton/
+```
 
 Then create a database with name that you want
 When the program tell you to enter the path of the CouchDB database, type :
 
 ```
-http://localhost:5984/name_of_your_db```
+http://localhost:5984/name_of_your_db
+```
 
 
 # Improvements

@@ -13,6 +13,7 @@ function selectAction(){
 			choices: ['Add file to IPFS',
 			'View IPFS files',
 			'Sync to COUCHDB',
+			'Retrieve files',
 			new inquirer.Separator(),
 			'Exit']
 		}
@@ -25,6 +26,18 @@ function selectAction(){
 	})
 }
 
+function enterFileHash(){
+	var file =[{
+		type : 'input',
+		name : 'fileHash',
+		message : 'Enter the hash of the file you want to retrieve :'
+	}]
+	return new Promise((resolve,reject)=>{
+		inquirer.prompt(file).then(answer=>{
+			return resolve(answer.fileHash);
+		})
+	})
+}
 
 function enterCouchURL(){
 	var couchDBURL =[{
@@ -106,5 +119,6 @@ module.exports = {
     enterCouchURL,
     enterFileVersion,
     enterFileDescription,
-		selectAction
+	selectAction,
+	enterFileHash
 }

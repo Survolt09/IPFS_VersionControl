@@ -11,7 +11,15 @@ const figlet = require('figlet');
 const inquirer = require('inquirer')
 const interface = require('./Interface.js')
 const moment = require('moment')
+const ora = require('ora');
+var prettyjson = require('prettyjson');
 
+/*const spinner = new ora({
+	text : 'Lauching Daemon',
+	spinner : 'dots'
+})
+
+ora.promise(runDaemon(),)*/
 
 clear();
 console.log(
@@ -19,6 +27,9 @@ console.log(
 		figlet.textSync('IPFS_VC', { horizontalLayout: 'full' })
 	)
 );
+
+//runDaemon();
+main();
 
 function main(){
 
@@ -33,13 +44,45 @@ function main(){
 			case 'Sync to COUCHDB':
 			syncCouchDB();
 			break;
+			case 'Retrieve files':
+			retrieveFiles();
+			break;
 			case 'Exit':
 			process.exit(-1);
 			break;
 		}
 	})
 }
+QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH
+function runDaemon(){
+	
+	console.log(chalk.green("Launching Daemon !\nPlease wait..."));
+	var command = {cmd : `ipfs daemon`};
+		exec(command.cmd, (err, stdout, stderr) => {
+			if (!err) {
+				console.log(stdout);
+				console.log('Daemon running !')
+			}else{
+				console.log(stderr)
+			}
+		})
+}
 
+
+function retrieveFiles(){
+	interface.enterFileHash().then(hash =>{
+		var command = {cmd : `ipfs get ${hash}`};
+		exec(command.cmd, (err, stdout, stderr) => {
+			if (!err) {
+				console.log(stdout)
+				console.log("File succefully retrieved !")
+				main();
+			}else{
+				onError(err);
+			}
+		})
+	})
+}
 
 function fileAlreadyExistsInDatabase(file_name) { //Try to retrieve the document in the db to see if the file exists.
 	return new Promise((resolve, reject) => {
@@ -60,7 +103,12 @@ function showPrograms() {
 	return new Promise((resolve, reject) => {
 		db.allDocs({ include_docs: true, descending: true })
 		.then((doc) => {
-			console.log(chalk.cyanBright(JSON.stringify(doc.rows, null, 4)));
+			console.log(chalk.cyanBright(prettyjson.render(doc.rows,{
+				keysColor: 'green',
+				dashColor: 'magenta',
+				stringColor: 'cyan'
+			  })));
+			//console.log(chalk.cyanBright(prettyjson.render(doc.rows, null, 4)));
 			console.log()
 			return resolve()
 		})
@@ -174,4 +222,4 @@ function addFileToIPFS(){
 })
 }
 
-main()
+//main()

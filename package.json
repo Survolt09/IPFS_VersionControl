@@ -9,8 +9,10 @@
     "clear": "^0.1.0",
     "figlet": "^1.2.0",
     "inquirer": "^5.1.0",
+    "moment": "latest",
+    "ora": "^2.0.0",
     "pouchdb": "^6.4.3",
-    "moment" : "latest"
+    "prettyjson": "^1.2.1"
   },
   "devDependencies": {},
   "scripts": {
